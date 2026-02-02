@@ -170,12 +170,35 @@ if cold-stress-ticks > 0 [
 ```
 
 погіршується “утримання” листка: зменшується attachedness, що підвищує ймовірність опадання;
-
+```
+set attachedness attachedness - cold-detach-penalty
+```
 посилюється почервоніння: частина sugar-level і water-level переходить у anthocyanin;
+```
+let conv min list 1.5 (min list sugar-level water-level)
+set sugar-level sugar-level - conv
+set water-level water-level - conv
+set anthocyanin anthocyanin + conv
+```
 
 пригнічується фотосинтез у adjust-sugar через коефіцієнт cold-photosynthesis-penalty;
+```
+let penalty 1
+if cold-stress-ticks > 0 [ set penalty cold-photosynthesis-penalty ]
+
+if water-level > 1 and sun-intensity > 20 and chlorophyll > 1 [
+  set water-level water-level - 0.5
+  set chlorophyll chlorophyll - 0.5
+  set sugar-level sugar-level + (1 * penalty)
+  set attachedness attachedness + (5 * penalty)
+]
+```
 
 обмежується поглинання води при низьких температурах (фізіологічне пригнічення процесів у холоді).
+```
+if temperature < cold-threshold [ stop ]
+```
+
 
 4) Лічильник cold-stress-count (що це і навіщо)
 ```
