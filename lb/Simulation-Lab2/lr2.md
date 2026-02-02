@@ -37,7 +37,7 @@ to update-daily-cycle
 
   let target-temp (base-temperature + (sun-intensity / 8))
   set temperature temperature + temp-lag * (target-temp - temperature)
-    ...
+     ``` 
 end
 Таким чином, інтенсивність сонячного світла змінюється плавно протягом доби
 (день/ніч), а температура слідує за змінами сонячного випромінювання з певним
