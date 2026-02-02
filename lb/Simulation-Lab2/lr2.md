@@ -115,4 +115,4 @@ cold-threshold, лист входить у стан холодового стр�
 
 ## Скріншот моделі в процесі симуляції
 
-![Скріншот моделі](https://github.com/matthewbp-nure/simulation-lab1/blob/main/lb/Simulation-Lab2/process.png))
+![Скріншот моделі](https://github.com/matthewbp-nure/simulation-lab1/blob/main/lb/Simulation-Lab2/process.png)
