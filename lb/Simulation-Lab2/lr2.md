@@ -59,6 +59,7 @@ sun-intensity отримує значення в діапазоні 0..base-sun-
 3) Найголовніше: саме тут змінюється температура
 Вплив сонця на температуру зроблено двома кроками:
 
+
 обчислюється цільова температура:
 ```
 let target-temp (base-temperature + (sun-intensity / 8))
@@ -78,7 +79,23 @@ let target-temp (base-temperature + (sun-intensity / 8))
 temp-lag визначає плавність (теплова інерція).
 
 4) Де саме це викликається
-Процедура update-daily-cycle викликається на кожному такті модельного часу у процедурі go (перед оновленням візуалізації сонця), тобто температура та інтенсивність світла постійно оновлюються під час симуляції.
+Процедура update-daily-cycle викликається на кожному такті модельного часу у процедурі go (перед оновленням візуалізації сонця), тобто температура та інтенсивність світла постійно оновлюються під час симуляції
+```
+to go
+  ;; Lab2: оновлюємо сонце і температуру кожен тик
+  update-daily-cycle
+
+  ;; Lab2 (own): оновлюємо стан "cold stress" кожен тик
+  update-cold-stress
+
+  make-wind-blow
+  make-rain-fall
+  move-water
+  ask suns [ show-intensity ]
+
+  tick
+end
+```
 
 Внесені зміни у вихідну логіку моделі, на власний розсуд
 На власний розсуд у модель додано механізм холодового стресу листя, який не руйнує логіку моделі (листя як і раніше росте/накопичує речовини/опадає), але додає реалістичну реакцію на низькі температури.
@@ -95,6 +112,11 @@ cold-stress-count
 Також кожному листку додано змінну стану:
 
 cold-stress-ticks
+```
+leaves-own [
+  cold-stress-ticks
+]
+```
 2) Порогове значення: де саме видно “10 °C”
 Холодовий стрес активується тільки за умовою:
 ```
@@ -115,6 +137,22 @@ cold-threshold = 10 °C (ініціалізується у setup як внутр
 
 3) Логіка холодового стресу (що саме змінюється)
 Якщо температура падає нижче cold-threshold, лист входить у стан холодового стресу на фіксований час cold-stress-duration. Під час цього стану:
+```
+if temperature < cold-threshold and cold-stress-ticks = 0 [
+  set cold-stress-ticks cold-stress-duration
+]
+
+if cold-stress-ticks > 0 [
+  set cold-stress-ticks cold-stress-ticks - 1
+
+  set attachedness attachedness - cold-detach-penalty
+
+  let conv min list 1.5 (min list sugar-level water-level)
+  set sugar-level sugar-level - conv
+  set water-level water-level - conv
+  set anthocyanin anthocyanin + conv
+]
+```
 
 погіршується “утримання” листка: зменшується attachedness, що підвищує ймовірність опадання;
 
@@ -125,6 +163,15 @@ cold-threshold = 10 °C (ініціалізується у setup як внутр
 обмежується поглинання води при низьких температурах (фізіологічне пригнічення процесів у холоді).
 
 4) Лічильник cold-stress-count (що це і навіщо)
+```
+set cold-stress-count 0
+
+ask attached-leaves [
+  if cold-stress-ticks > 0 [
+    set cold-stress-count cold-stress-count + 1
+  ]
+]
+```
 Окремо реалізовано cold-stress-count — це кількість листків, що перебувають у стані холодового стресу на поточному такті.
 Лічильник використовується як наочний показник для експерименту і дозволяє порівнювати сценарії зі зміною day-length.
 
@@ -132,7 +179,15 @@ cold-threshold = 10 °C (ініціалізується у setup як внутр
 
 Обчислювальні експерименти
 1. Вплив тривалості доби на інтенсивність холодового стресу листя
-Мета експерименту — дослідити, як зміна параметра day-length (тривалість модельної доби) впливає на:
+Мета експерименту — дослідити, як зміна параметра day-length 
+```
+set day-length 100
+;; або
+set day-length 200
+;; або
+set day-length 400
+```
+(тривалість модельної доби) впливає на:
 
 коливання sun-intensity та temperature;
 
@@ -165,6 +220,20 @@ cold-threshold = 10 °C (ініціалізується у setup як внутр
 Висновок
 Результати показали, що при меншій тривалості доби (day-length = 100) холодні фази виникають частіше, що збільшує cold-stress-count та прискорює опадання листя.
 При збільшенні тривалості доби (day-length = 400) температурні коливання стають плавнішими, а холодовий стрес проявляється рідше.
+```
+;; періодичність добового циклу визначається day-length
+let phase ((ticks mod day-length) / day-length)
+
+;; формування освітленості протягом доби
+let raw (sin (phase * 360 - 90))
+let daylight max list 0 ((raw + 1) / 2)
+
+set sun-intensity base-sun-intensity * daylight
+
+;; температура змінюється плавно з інерцією
+let target-temp (base-temperature + (sun-intensity / 8))
+set temperature temperature + temp-lag * (target-temp - temperature)
+```
 
 Скріншот моделі в процесі симуляції
 ![Скріншот моделі](https://github.com/matthewbp-nure/simulation-lab1/blob/main/lb/Simulation-Lab2/process.png)
