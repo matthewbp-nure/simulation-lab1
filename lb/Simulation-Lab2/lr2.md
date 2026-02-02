@@ -55,6 +55,20 @@ sin(...) формує плавний профіль освітленості (б
 daylight обмежується від 0 до 1 (вночі 0, вдень до 1).
 
 sun-intensity отримує значення в діапазоні 0..base-sun-intensity.
+```
+;; фаза доби в діапазоні 0..1
+let phase ((ticks mod day-length) / day-length)
+
+;; синусоїдальний профіль освітленості
+let raw (sin (phase * 360 - 90))
+
+;; обмеження освітленості в межах 0..1
+let daylight max list 0 ((raw + 1) / 2)
+
+;; масштабування інтенсивності сонця
+set sun-intensity base-sun-intensity * daylight
+set sun-intensity clip sun-intensity
+```
 
 3) Найголовніше: саме тут змінюється температура
 Вплив сонця на температуру зроблено двома кроками:
